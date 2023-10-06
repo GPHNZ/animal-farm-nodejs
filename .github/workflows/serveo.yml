@@ -1,0 +1,37 @@
+name: Deploy to Local Machine
+
+on:
+  push:
+    branches:
+      - main # or your default branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Connect via SSH and Deploy
+      env:
+        PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        HOST: ${{ secrets.HOST }}
+        USER: ${{ secrets.USER }}
+      run: |
+        # Write the private key to a file
+        echo "$PRIVATE_KEY" > private_key
+        chmod 600 private_key
+
+        # SSH into the local machine and run commands to update Docker
+        ssh -o StrictHostKeyChecking=no -i private_key $USER@$HOST << 'ENDSSH'
+        # Pull the latest Docker image
+        docker pull user/repo:latest
+
+        # Stop and remove the existing container
+        # docker stop my-container
+        # docker rm my-container
+
+        # Start a new container with the latest image
+        docker run --name my-container -d user/repo:latest
+        ENDSSH
